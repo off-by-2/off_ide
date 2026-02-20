@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_bloc: ^9.1.1
   google_fonts: ^6.1.0
   hydrated_bloc: ^10.1.1
   off_ide:
