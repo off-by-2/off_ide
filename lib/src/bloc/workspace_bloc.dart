@@ -30,6 +30,8 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
     on<ResizeSidebar>(_onResizeSidebar);
     on<ReorderTab>(_onReorderTab);
     on<MoveTabToPane>(_onMoveTabToPane);
+    on<CloseOthers>(_onCloseOthers);
+    on<CloseAll>(_onCloseAll);
     on<SplitView>(_onSplitEditor);
     on<CloseSplit>(_onCloseSplit);
     on<ResizeSplit>(_onResizeSplit);
@@ -422,6 +424,69 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
         tabsByPane: newTabsByPane,
         activePaneIndex: event.targetPaneIndex,
         activeTabId: event.tabId,
+      ),
+    );
+  }
+
+  /// Handles closing all other tabs in a pane
+  Future<void> _onCloseOthers(
+    CloseOthers event,
+    Emitter<WorkspaceState> emit,
+  ) async {
+    final paneTabs = state.tabsByPane[event.paneIndex] ?? [];
+    if (!paneTabs.contains(event.tabId)) return;
+
+    final tabsToRemove = paneTabs.where((id) => id != event.tabId).toList();
+    if (tabsToRemove.isEmpty) return;
+
+    final newOpenTabs = List<TabData>.from(state.openTabs)
+      ..removeWhere((tab) => tabsToRemove.contains(tab.id));
+
+    final newTabsByPane = Map<int, List<String>>.from(state.tabsByPane);
+    newTabsByPane[event.paneIndex] = [event.tabId];
+
+    // If active tab was one of the removed ones, switch to the kept tab
+    String? newActiveTabId = state.activeTabId;
+    if (tabsToRemove.contains(state.activeTabId)) {
+      newActiveTabId = event.tabId;
+    }
+
+    emit(
+      state.copyWith(
+        openTabs: newOpenTabs,
+        tabsByPane: newTabsByPane,
+        activeTabId: newActiveTabId,
+      ),
+    );
+  }
+
+  /// Handles closing all tabs in a pane
+  Future<void> _onCloseAll(
+    CloseAll event,
+    Emitter<WorkspaceState> emit,
+  ) async {
+    final paneTabs = state.tabsByPane[event.paneIndex] ?? [];
+    if (paneTabs.isEmpty) return;
+
+    final newOpenTabs = List<TabData>.from(state.openTabs)
+      ..removeWhere((tab) => paneTabs.contains(tab.id));
+
+    final newTabsByPane = Map<int, List<String>>.from(state.tabsByPane);
+    newTabsByPane[event.paneIndex] = [];
+
+    // Validating active tab
+    String? newActiveTabId = state.activeTabId;
+    if (paneTabs.contains(state.activeTabId)) {
+      newActiveTabId =
+          null; // No active tab if we closed the pane containing it
+      // Logic could be improved to find another tab in another pane, but null is safe
+    }
+
+    emit(
+      state.copyWith(
+        openTabs: newOpenTabs,
+        tabsByPane: newTabsByPane,
+        activeTabId: newActiveTabId,
       ),
     );
   }
