@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:off_ide/src/models/models.dart';
@@ -33,7 +34,21 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
     on<SplitView>(_onSplitEditor);
     on<CloseSplit>(_onCloseSplit);
     on<ResizeSplit>(_onResizeSplit);
+    on<SetActivePane>(_onSetActivePane);
   }
+
+  /// The maximum number of tabs allowed to be open simultaneously
+  ///
+  /// Prevents memory issues by limiting the number of active page widgets.
+  final int maxTabs;
+
+  /// Maximum number of vertical splits allowed
+  ///
+  /// Limits UI complexity and maintains usability.
+  final int maxVerticalSplits;
+
+  /// UUID generator for creating unique tab IDs
+  final _uuid = const Uuid();
 
   @override
   WorkspaceState? fromJson(Map<String, dynamic> json) {
@@ -59,27 +74,16 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
     }
   }
 
-  /// The maximum number of tabs allowed to be open simultaneously
-  ///
-  /// Prevents memory issues by limiting the number of active page widgets.
-  final int maxTabs;
-
-  /// Maximum number of vertical splits allowed
-  ///
-  /// Limits UI complexity and maintains usability.
-  final int maxVerticalSplits;
-
-  /// UUID generator for creating unique tab IDs
-  final _uuid = const Uuid();
-
   /// Handles opening a new tab or focusing an existing one
   ///
   /// Checks for existing tabs with the same pageId to prevent duplicates.
   /// Respects the maximum tab limit and split pane configuration.
   Future<void> _onOpenTab(OpenTab event, Emitter<WorkspaceState> emit) async {
-    // Check if tab with same pageId already exists
+    // Check if tab with same pageId AND same args already exists
     final existingTab = state.openTabs.cast<TabData?>().firstWhere(
-      (tab) => tab?.pageId == event.pageId,
+      (tab) =>
+          tab?.pageId == event.pageId &&
+          mapEquals(tab?.pageArgs, event.pageArgs),
       orElse: () => null,
     );
 
@@ -109,8 +113,8 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
       pageArgs: event.pageArgs,
     );
 
-    // Add to specified pane (or active pane)
-    final targetPane = event.paneIndex.clamp(
+    // Add to specified pane or active pane
+    final targetPane = (event.paneIndex ?? state.activePaneIndex).clamp(
       0,
       state.splitConfiguration.splitCount - 1,
     );
@@ -120,14 +124,31 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
       newTab.id,
     ];
 
+    // Update per-pane active tab
+    final updatedActiveTabByPane = Map<int, String>.from(state.activeTabByPane);
+    updatedActiveTabByPane[targetPane] = newTab.id;
+
     emit(
       state.copyWith(
         openTabs: [...state.openTabs, newTab],
         activeTabId: newTab.id,
         activePaneIndex: targetPane,
         tabsByPane: updatedTabsByPane,
+        activeTabByPane: updatedActiveTabByPane,
       ),
     );
+  }
+
+  /// Handles setting the active pane index
+  Future<void> _onSetActivePane(
+    SetActivePane event,
+    Emitter<WorkspaceState> emit,
+  ) async {
+    // Only update if index is valid
+    if (event.paneIndex >= 0 &&
+        event.paneIndex < state.splitConfiguration.splitCount) {
+      emit(state.copyWith(activePaneIndex: event.paneIndex));
+    }
   }
 
   /// Handles closing a specific tab
@@ -146,28 +167,37 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
           .toList();
     }
 
-    // Update active tab if the closed tab was active
+    // Update per-pane active tabs
+    final updatedActiveTabByPane = Map<int, String>.from(state.activeTabByPane);
+    for (final entry in updatedActiveTabByPane.entries.toList()) {
+      if (entry.value == event.tabId) {
+        // This pane's active tab was closed, pick the last remaining tab
+        final remaining = updatedTabsByPane[entry.key] ?? [];
+        if (remaining.isNotEmpty) {
+          updatedActiveTabByPane[entry.key] = remaining.last;
+        } else {
+          updatedActiveTabByPane.remove(entry.key);
+        }
+      }
+    }
+
+    // Update global active tab if the closed tab was active
     var newActiveId = state.activeTabId;
     var newActivePaneIndex = state.activePaneIndex;
 
     if (event.tabId == state.activeTabId) {
-      // Find the next tab to activate
       final currentPaneTabs = updatedTabsByPane[state.activePaneIndex] ?? [];
 
       if (currentPaneTabs.isNotEmpty) {
-        // Activate the last tab in the current pane
         newActiveId = currentPaneTabs.last;
       } else {
-        // Find any tab in any pane
+        newActiveId = null;
         for (final entry in updatedTabsByPane.entries) {
           if (entry.value.isNotEmpty) {
             newActiveId = entry.value.last;
             newActivePaneIndex = entry.key;
             break;
           }
-        }
-        if (newActiveId == event.tabId) {
-          newActiveId = null;
         }
       }
     }
@@ -178,6 +208,7 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
         activeTabId: newActiveId,
         activePaneIndex: newActivePaneIndex,
         tabsByPane: updatedTabsByPane,
+        activeTabByPane: updatedActiveTabByPane,
       ),
     );
   }
@@ -193,10 +224,15 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
     final paneIndex = state.getPaneForTab(event.tabId) ?? state.activePaneIndex;
     final targetPaneIndex = event.paneIndex ?? paneIndex;
 
+    // Update per-pane active tab
+    final updatedActiveTabByPane = Map<int, String>.from(state.activeTabByPane);
+    updatedActiveTabByPane[targetPaneIndex] = event.tabId;
+
     emit(
       state.copyWith(
         activeTabId: event.tabId,
         activePaneIndex: targetPaneIndex,
+        activeTabByPane: updatedActiveTabByPane,
       ),
     );
   }
@@ -281,7 +317,7 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
 
   /// Handles closing a split pane
   ///
-  /// Removes the pane and redistributes its tabs to remaining panes.
+  /// Removes the pane and discards its tabs.
   Future<void> _onCloseSplit(
     CloseSplit event,
     Emitter<WorkspaceState> emit,
@@ -290,19 +326,32 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
       return; // Can't close the last pane
     }
 
-    // Move tabs from closing pane to the first pane
+    // Collect tab IDs from the closing pane to remove them
     final closingPaneTabs = state.tabsByPane[event.paneIndex] ?? [];
-    final updatedTabsByPane = <int, List<String>>{};
 
-    // Redistribute panes
+    // Remove closed pane's tabs from openTabs
+    final updatedOpenTabs = state.openTabs
+        .where((tab) => !closingPaneTabs.contains(tab.id))
+        .toList();
+
+    // Rebuild tabsByPane without the closing pane
+    final updatedTabsByPane = <int, List<String>>{};
     var newIndex = 0;
     for (final entry in state.tabsByPane.entries) {
       if (entry.key != event.paneIndex) {
-        if (newIndex == 0) {
-          // Add closing pane's tabs to first remaining pane
-          updatedTabsByPane[newIndex] = [...(entry.value), ...closingPaneTabs];
-        } else {
-          updatedTabsByPane[newIndex] = entry.value;
+        updatedTabsByPane[newIndex] = entry.value;
+        newIndex++;
+      }
+    }
+
+    // Rebuild activeTabByPane without the closing pane
+    final updatedActiveTabByPane = <int, String>{};
+    newIndex = 0;
+    for (final entry in state.tabsByPane.entries) {
+      if (entry.key != event.paneIndex) {
+        final existingActive = state.activeTabByPane[entry.key];
+        if (existingActive != null) {
+          updatedActiveTabByPane[newIndex] = existingActive;
         }
         newIndex++;
       }
@@ -314,21 +363,29 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
       (index) => 1.0 / newSplitCount,
     );
 
-    final newSplitConfig = state.splitConfiguration.copyWith(
-      splitCount: newSplitCount,
-      splitRatios: newRatios,
-      activePane: state.activePaneIndex >= newSplitCount
-          ? 0
-          : state.activePaneIndex,
-    );
+    final newActivePaneIndex = state.activePaneIndex >= newSplitCount
+        ? 0
+        : state.activePaneIndex;
+
+    // Update global activeTabId to the remaining pane's active tab
+    final newActiveTabId =
+        updatedActiveTabByPane[newActivePaneIndex] ??
+        (updatedTabsByPane[newActivePaneIndex]?.isNotEmpty ?? false
+            ? updatedTabsByPane[newActivePaneIndex]!.last
+            : null);
 
     emit(
       state.copyWith(
-        splitConfiguration: newSplitConfig,
+        openTabs: updatedOpenTabs,
+        splitConfiguration: state.splitConfiguration.copyWith(
+          splitCount: newSplitCount,
+          splitRatios: newRatios,
+          activePane: newActivePaneIndex,
+        ),
         tabsByPane: updatedTabsByPane,
-        activePaneIndex: state.activePaneIndex >= newSplitCount
-            ? 0
-            : state.activePaneIndex,
+        activeTabByPane: updatedActiveTabByPane,
+        activePaneIndex: newActivePaneIndex,
+        activeTabId: newActiveTabId,
       ),
     );
   }
