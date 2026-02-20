@@ -109,8 +109,7 @@ class _TabWidget extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return DragTarget<_TabDragData>(
-      onWillAcceptWithDetails: (details) =>
-          details.data != null && details.data.tabId != tab.id,
+      onWillAcceptWithDetails: (details) => details.data.tabId != tab.id,
       onAcceptWithDetails: (details) {
         final data = details.data;
         if (data.paneIndex == paneIndex) {
@@ -204,6 +203,9 @@ class _TabWidget extends StatelessWidget {
               SwitchTab(tabId: tab.id, paneIndex: paneIndex),
             );
           },
+          onSecondaryTapUp: (details) {
+            _showContextMenu(context, details.globalPosition);
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             constraints: const BoxConstraints(minWidth: 120, maxWidth: 200),
@@ -274,6 +276,38 @@ class _TabWidget extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _showContextMenu(BuildContext context, Offset position) {
+    final bloc = context.read<WorkspaceBloc>();
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        position.dx,
+        position.dy,
+      ),
+      items: <PopupMenuEntry<String>>[
+        PopupMenuItem<String>(
+          value: 'close',
+          onTap: () => bloc.add(CloseTab(tab.id)),
+          child: const Text('Close'),
+        ),
+        PopupMenuItem<String>(
+          value: 'close_others',
+          onTap: () =>
+              bloc.add(CloseOthers(tabId: tab.id, paneIndex: paneIndex)),
+          child: const Text('Close Others'),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'close_all',
+          onTap: () => bloc.add(CloseAll(paneIndex)),
+          child: const Text('Close All'),
+        ),
+      ],
     );
   }
 }
