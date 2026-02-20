@@ -2,13 +2,18 @@
 
 A high-performance, VS Code-like workspace shell widget for Flutter applications.
 
+[**Live Demo**](https://off-by-2.github.io/off_ide/)
+
+
 ![Off IDE Demo](https://github.com/off-by-2/off_ide/raw/main/off_ide.gif)
 
 ## Features
 
 - **VS Code Layout**: Familiar structure with Activity Bar, Sidebar, and Editor Area.
 - **Split Editor**: Support for vertical split panes to view multiple tabs side-by-side.
-- **Tab Management**: Robust tab system with close actions, dirty state indicators, and drag-and-drop (coming soon).
+- **Tab Management**: Robust tab system with close actions, dirty state indicators, and drag-and-drop support.
+- **Persistence**: Automatic state restoration of open tabs and sidebar state via `HydratedBloc`.
+- **Web Ready**: Optimized for web deployments with responsive design and persistence support.
 - **High Performance**: Optimized for large widget trees with O(1) state lookups and granular rebuilds.
 - **Customizable**: Fully configurable activity bar, sidebar views, and page registry.
 - **Theme Aware**: Seamlessly integrates with your application's `ThemeData`, supporting both light and dark modes.
@@ -19,7 +24,7 @@ Add `off_ide` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  off_ide: ^0.1.0
+  off_ide: ^0.1.2
 ```
 
 ## Usage
@@ -46,12 +51,13 @@ class MyApp extends StatelessWidget {
           activityBarItems: [
             const ActivityBarItem(
               id: 'files',
-              icon: Icons.folder,
+              icon: Icons.folder_outlined,
               label: 'Explorer',
+              tooltip: 'Project Files',
             ),
             const ActivityBarItem(
               id: 'settings',
-              icon: Icons.settings,
+              icon: Icons.settings_outlined,
               label: 'Settings',
             ),
           ],
@@ -60,17 +66,19 @@ class MyApp extends StatelessWidget {
           sidebarViews: {
             'files': const SidebarView(
               id: 'files',
-              title: 'Explorer',
+              title: 'EXPLORER',
               groups: [
                  MenuGroup(
                    id: 'project',
                    label: 'My Project',
+                   isExpanded: true,
                    items: [
                      MenuItem(
                        id: 'readme',
                        label: 'README.md',
                        pageId: 'markdown_viewer',
                        pageArgs: {'file': 'README.md'},
+                       icon: Icons.description_outlined,
                      ),
                    ],
                  ),

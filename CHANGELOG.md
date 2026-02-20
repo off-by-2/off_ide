@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2
+
+- Added GitHub Actions for automatic deployment to GitHub Pages.
+- Updated example application with generic terminology (Project Management / Team Workspace).
+- Optimized Web support with standard persistence handling.
+- Added live demo link to README.
+
+
 ## 0.1.1
 
 - Initial release.
