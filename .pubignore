@@ -1,0 +1,7 @@
+# Exclude media files from published package
+*.webm
+*.mp4
+*.gif
+
+# Exclude example app
+example/

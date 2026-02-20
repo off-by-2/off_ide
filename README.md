@@ -2,7 +2,7 @@
 
 A high-performance, VS Code-like workspace shell widget for Flutter applications.
 
-![Off IDE Demo](https://via.placeholder.com/800x400.png?text=Off+IDE+Demo)
+<video src="https://github.com/off-by-2/off_ide/raw/main/off_ide.webm" autoplay loop muted playsinline width="100%"></video>
 
 ## Features
 
