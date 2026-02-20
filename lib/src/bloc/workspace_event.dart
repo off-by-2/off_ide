@@ -229,3 +229,33 @@ class MoveTabToPane extends WorkspaceEvent {
   @override
   List<Object> get props => [tabId, targetPaneIndex];
 }
+
+/// Event to close all other tabs in a pane except the specified one
+class CloseOthers extends WorkspaceEvent {
+  /// Creates a [CloseOthers] event
+  const CloseOthers({
+    required this.tabId,
+    required this.paneIndex,
+  });
+
+  /// ID of the tab to keep open
+  final String tabId;
+
+  /// Index of the pane
+  final int paneIndex;
+
+  @override
+  List<Object> get props => [tabId, paneIndex];
+}
+
+/// Event to close all tabs in a pane
+class CloseAll extends WorkspaceEvent {
+  /// Creates a [CloseAll] event
+  const CloseAll(this.paneIndex);
+
+  /// Index of the pane to clear
+  final int paneIndex;
+
+  @override
+  List<Object> get props => [paneIndex];
+}
