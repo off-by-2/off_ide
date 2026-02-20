@@ -23,6 +23,7 @@ class WorkspaceConfig {
     this.activityBarWidth = 48.0,
     this.sidebarWidth = 250.0,
     this.maxVerticalSplits = 2,
+    this.emptyPaneBuilder,
   });
 
   /// Items displayed in the leftmost activity bar (like VS Code)
@@ -64,6 +65,12 @@ class WorkspaceConfig {
   /// Limits how many times the editor can be split vertically.
   /// 1 = no splits, 2 = one split (two panes), 3 = two splits (three panes).
   final int maxVerticalSplits;
+
+  /// Optional builder for custom empty pane content
+  ///
+  /// If provided, this widget is shown when a pane has no open tabs.
+  /// If null, a default placeholder is displayed.
+  final Widget Function(BuildContext context, int paneIndex)? emptyPaneBuilder;
 }
 
 /// Represents an item in the VS Code-like activity bar
