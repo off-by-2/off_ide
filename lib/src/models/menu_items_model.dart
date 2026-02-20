@@ -81,6 +81,8 @@ class MenuGroup extends Equatable {
     this.subGroups = const [],
     this.icon,
     this.isExpanded = false,
+    this.pageId,
+    this.pageArgs,
   });
 
   /// Unique identifier for this group
@@ -113,8 +115,25 @@ class MenuGroup extends Equatable {
   /// User can still collapse/expand regardless of this setting.
   final bool isExpanded;
 
+  /// Optional page ID to open when the group header is clicked
+  ///
+  /// If provided, clicking the label opens this page, while the arrow toggles expansion.
+  final String? pageId;
+
+  /// Optional arguments passed to the page builder
+  final Map<String, dynamic>? pageArgs;
+
   @override
-  List<Object?> get props => [id, label, items, subGroups, icon, isExpanded];
+  List<Object?> get props => [
+    id,
+    label,
+    items,
+    subGroups,
+    icon,
+    isExpanded,
+    pageId,
+    pageArgs,
+  ];
 }
 
 /// Represents a nested sub-group within a MenuGroup
@@ -129,6 +148,8 @@ class MenuSubGroup extends Equatable {
     required this.items,
     this.icon,
     this.isExpanded = false,
+    this.pageId,
+    this.pageArgs,
   });
 
   /// Unique identifier for this sub-group
@@ -148,8 +169,22 @@ class MenuSubGroup extends Equatable {
   /// Whether this sub-group is expanded by default
   final bool isExpanded;
 
+  /// Optional page ID to open when the sub-group header is clicked
+  final String? pageId;
+
+  /// Optional arguments passed to the page builder
+  final Map<String, dynamic>? pageArgs;
+
   @override
-  List<Object?> get props => [id, label, items, icon, isExpanded];
+  List<Object?> get props => [
+    id,
+    label,
+    items,
+    icon,
+    isExpanded,
+    pageId,
+    pageArgs,
+  ];
 }
 
 /// Represents the complete sidebar content for an activity bar item

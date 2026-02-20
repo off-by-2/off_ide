@@ -49,6 +49,8 @@
 /// ```
 library;
 
+export 'package:hydrated_bloc/hydrated_bloc.dart';
+
 // Core BLoC architecture
 export 'src/bloc/workspace_bloc.dart';
 // Data models
@@ -60,4 +62,3 @@ export 'src/widgets/salvia_shell.dart';
 export 'src/widgets/sidebar.dart';
 export 'src/widgets/split_editor.dart';
 export 'src/widgets/tab_bar_widget.dart';
-export 'package:hydrated_bloc/hydrated_bloc.dart';

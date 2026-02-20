@@ -131,39 +131,65 @@ class _MenuGroupWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Group header
-            InkWell(
-              onTap: () => context.read<WorkspaceBloc>().add(
-                ToggleSidebarGroup(group.id),
-              ),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_down
-                          : Icons.keyboard_arrow_right,
-                      size: 16,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                children: [
+                  // Expand/Collapse Toggle
+                  InkWell(
+                    onTap: () => context.read<WorkspaceBloc>().add(
+                      ToggleSidebarGroup(group.id),
                     ),
-                    if (group.icon != null) ...[
-                      const SizedBox(width: 4),
-                      Icon(group.icon, size: 16),
-                    ],
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        group.label,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.all(2),
+                      child: Icon(
+                        isExpanded
+                            ? Icons.keyboard_arrow_down
+                            : Icons.keyboard_arrow_right,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                  if (group.icon != null) ...[
+                    const SizedBox(width: 4),
+                    Icon(group.icon, size: 16),
+                  ],
+                  const SizedBox(width: 8),
+
+                  // Group Label
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        if (group.pageId != null) {
+                          context.read<WorkspaceBloc>().add(
+                            OpenTab(
+                              pageId: group.pageId!,
+                              title: group.label,
+                              icon: group.icon,
+                              pageArgs: group.pageArgs,
+                            ),
+                          );
+                        } else {
+                          // Default behavior: Toggle expansion if not a page
+                          context.read<WorkspaceBloc>().add(
+                            ToggleSidebarGroup(group.id),
+                          );
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Text(
+                          group.label,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
@@ -217,41 +243,70 @@ class _MenuSubGroupWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Sub-group header
-            InkWell(
-              onTap: () => context.read<WorkspaceBloc>().add(
-                ToggleSidebarGroup(subGroupKey),
+            Container(
+              padding: const EdgeInsets.only(
+                left: 32,
+                right: 12,
+                top: 4,
+                bottom: 4,
               ),
-              child: Container(
-                padding: const EdgeInsets.only(
-                  left: 32,
-                  right: 12,
-                  top: 4,
-                  bottom: 4,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_down
-                          : Icons.keyboard_arrow_right,
-                      size: 14,
+              child: Row(
+                children: [
+                  // Expand/Collapse Toggle
+                  InkWell(
+                    onTap: () => context.read<WorkspaceBloc>().add(
+                      ToggleSidebarGroup(subGroupKey),
                     ),
-                    if (subGroup.icon != null) ...[
-                      const SizedBox(width: 4),
-                      Icon(subGroup.icon, size: 14),
-                    ],
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        subGroup.label,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.all(2),
+                      child: Icon(
+                        isExpanded
+                            ? Icons.keyboard_arrow_down
+                            : Icons.keyboard_arrow_right,
+                        size: 14,
+                      ),
+                    ),
+                  ),
+                  if (subGroup.icon != null) ...[
+                    const SizedBox(width: 4),
+                    Icon(subGroup.icon, size: 14),
+                  ],
+                  const SizedBox(width: 6),
+
+                  // Sub-group Label
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        if (subGroup.pageId != null) {
+                          context.read<WorkspaceBloc>().add(
+                            OpenTab(
+                              pageId: subGroup.pageId!,
+                              title: subGroup.label,
+                              icon: subGroup.icon,
+                              pageArgs: subGroup.pageArgs,
+                            ),
+                          );
+                        } else {
+                          // Default behavior: Toggle expansion
+                          context.read<WorkspaceBloc>().add(
+                            ToggleSidebarGroup(subGroupKey),
+                          );
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Text(
+                          subGroup.label,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
