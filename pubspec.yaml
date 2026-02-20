@@ -1,5 +1,5 @@
 name: off_ide
-description: A high-performance IDE shell widget for Flutter.
+description: A high-performance, VS Code-like workspace shell widget for Flutter applications, featuring split editors, tab management, and a customizable sidebar.
 version: 0.1.0
 repository: https://github.com/off-by-2/off_ide
 homepage: https://github.com/off-by-2/off_ide

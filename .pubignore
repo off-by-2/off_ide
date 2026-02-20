@@ -8,11 +8,9 @@ build/
 *.mp4
 *.gif
 
-# Example app
-example/
-
 # IDE and OS files
 .idea/
 *.iml
 .vscode/
 .DS_Store
+doc/

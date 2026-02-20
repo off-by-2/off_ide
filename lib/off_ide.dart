@@ -49,7 +49,8 @@
 /// ```
 library;
 
-export 'package:hydrated_bloc/hydrated_bloc.dart';
+export 'package:hydrated_bloc/hydrated_bloc.dart'
+    show HydratedBloc, HydratedStorage, HydratedStorageDirectory;
 
 // Core BLoC architecture
 export 'src/bloc/workspace_bloc.dart';
