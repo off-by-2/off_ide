@@ -34,7 +34,7 @@ class WorkspaceTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (tabs.isEmpty) {
+    if (tabs.isEmpty && !canClose && !canSplit) {
       return const SizedBox.shrink();
     }
 
