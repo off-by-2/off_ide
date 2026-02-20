@@ -27,6 +27,7 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
     on<MarkTabDirty>(_onMarkTabDirty);
     on<SwitchActivity>(_onSwitchActivity);
     on<ToggleSidebarGroup>(_onToggleSidebarGroup);
+    on<ResizeSidebar>(_onResizeSidebar);
     on<SplitView>(_onSplitEditor);
     on<CloseSplit>(_onCloseSplit);
     on<ResizeSplit>(_onResizeSplit);
@@ -346,5 +347,13 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
     );
 
     emit(state.copyWith(splitConfiguration: newSplitConfig));
+  }
+
+  /// Handles resizing the sidebar
+  Future<void> _onResizeSidebar(
+    ResizeSidebar event,
+    Emitter<WorkspaceState> emit,
+  ) async {
+    emit(state.copyWith(sidebarWidth: event.width));
   }
 }

@@ -15,6 +15,7 @@ class WorkspaceState extends Equatable {
     this.splitConfiguration = const SplitConfiguration(),
     this.tabsByPane = const {0: []},
     this.error,
+    this.sidebarWidth,
   }) : _tabMap = {for (final tab in openTabs) tab.id: tab};
 
   /// Creates a [WorkspaceState] instance from a JSON map
@@ -46,6 +47,7 @@ class WorkspaceState extends Equatable {
             ),
           ) ??
           const {0: []},
+      sidebarWidth: json['sidebarWidth'] as double?,
     );
   }
 
@@ -85,6 +87,9 @@ class WorkspaceState extends Equatable {
   /// Key is pane index, value is list of tab IDs in that pane.
   final Map<int, List<String>> tabsByPane;
 
+  /// Width of the sidebar (if resized by user)
+  final double? sidebarWidth;
+
   /// Current error message, if any
   ///
   /// Displayed to the user via snackbar or error dialog.
@@ -99,6 +104,7 @@ class WorkspaceState extends Equatable {
     Map<String, bool>? expandedGroups,
     SplitConfiguration? splitConfiguration,
     Map<int, List<String>>? tabsByPane,
+    double? sidebarWidth,
     String? error,
   }) {
     return WorkspaceState(
@@ -109,6 +115,7 @@ class WorkspaceState extends Equatable {
       expandedGroups: expandedGroups ?? this.expandedGroups,
       splitConfiguration: splitConfiguration ?? this.splitConfiguration,
       tabsByPane: tabsByPane ?? this.tabsByPane,
+      sidebarWidth: sidebarWidth ?? this.sidebarWidth,
       error: error,
     );
   }
