@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0
+## 0.1.1
 
 - Initial release.
 - VS Code-like workspace shell with Activity Bar, Sidebar, and Split Editor.
@@ -12,3 +12,4 @@
 - Sidebar-to-editor drag-and-drop.
 - Click-to-focus split panes with visual feedback.
 - Theme-aware design supporting light and dark modes.
+
