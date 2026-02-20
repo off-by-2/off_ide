@@ -28,6 +28,8 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
     on<SwitchActivity>(_onSwitchActivity);
     on<ToggleSidebarGroup>(_onToggleSidebarGroup);
     on<ResizeSidebar>(_onResizeSidebar);
+    on<ReorderTab>(_onReorderTab);
+    on<MoveTabToPane>(_onMoveTabToPane);
     on<SplitView>(_onSplitEditor);
     on<CloseSplit>(_onCloseSplit);
     on<ResizeSplit>(_onResizeSplit);
@@ -355,5 +357,72 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
     Emitter<WorkspaceState> emit,
   ) async {
     emit(state.copyWith(sidebarWidth: event.width));
+  }
+
+  /// Handles reordering a tab within a pane
+  Future<void> _onReorderTab(
+    ReorderTab event,
+    Emitter<WorkspaceState> emit,
+  ) async {
+    final currentTabs = List<String>.from(
+      state.tabsByPane[event.paneIndex] ?? [],
+    );
+    if (event.oldIndex < 0 ||
+        event.oldIndex >= currentTabs.length ||
+        event.newIndex < 0 ||
+        event.newIndex > currentTabs.length) {
+      return;
+    }
+
+    final tabId = currentTabs.removeAt(event.oldIndex);
+    final insertIndex = event.newIndex > event.oldIndex
+        ? event.newIndex - 1
+        : event.newIndex;
+    currentTabs.insert(insertIndex, tabId);
+
+    final newTabsByPane = Map<int, List<String>>.from(state.tabsByPane);
+    newTabsByPane[event.paneIndex] = currentTabs;
+
+    emit(state.copyWith(tabsByPane: newTabsByPane));
+  }
+
+  /// Handles moving a tab to a different pane
+  Future<void> _onMoveTabToPane(
+    MoveTabToPane event,
+    Emitter<WorkspaceState> emit,
+  ) async {
+    int? sourcePaneIndex;
+    for (final entry in state.tabsByPane.entries) {
+      if (entry.value.contains(event.tabId)) {
+        sourcePaneIndex = entry.key;
+        break;
+      }
+    }
+
+    if (sourcePaneIndex == null || sourcePaneIndex == event.targetPaneIndex) {
+      return;
+    }
+
+    final newTabsByPane = Map<int, List<String>>.from(state.tabsByPane);
+
+    // Remove from source
+    final sourceTabs = List<String>.from(newTabsByPane[sourcePaneIndex]!);
+    sourceTabs.remove(event.tabId);
+    newTabsByPane[sourcePaneIndex] = sourceTabs;
+
+    // Add to target
+    final targetTabs = List<String>.from(
+      newTabsByPane[event.targetPaneIndex] ?? [],
+    );
+    targetTabs.add(event.tabId);
+    newTabsByPane[event.targetPaneIndex] = targetTabs;
+
+    emit(
+      state.copyWith(
+        tabsByPane: newTabsByPane,
+        activePaneIndex: event.targetPaneIndex,
+        activeTabId: event.tabId,
+      ),
+    );
   }
 }

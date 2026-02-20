@@ -189,3 +189,43 @@ class ResizeSidebar extends WorkspaceEvent {
   @override
   List<Object> get props => [width];
 }
+
+/// Event to reorder a tab within the same pane
+class ReorderTab extends WorkspaceEvent {
+  /// Creates a [ReorderTab] event
+  const ReorderTab({
+    required this.paneIndex,
+    required this.oldIndex,
+    required this.newIndex,
+  });
+
+  /// Index of the pane containing the tab
+  final int paneIndex;
+
+  /// Original index of the tab
+  final int oldIndex;
+
+  /// New index for the tab
+  final int newIndex;
+
+  @override
+  List<Object> get props => [paneIndex, oldIndex, newIndex];
+}
+
+/// Event to move a tab to a different pane
+class MoveTabToPane extends WorkspaceEvent {
+  /// Creates a [MoveTabToPane] event
+  const MoveTabToPane({
+    required this.tabId,
+    required this.targetPaneIndex,
+  });
+
+  /// ID of the tab to move
+  final String tabId;
+
+  /// Index of the destination pane
+  final int targetPaneIndex;
+
+  @override
+  List<Object> get props => [tabId, targetPaneIndex];
+}
