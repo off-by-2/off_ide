@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:off_ide/off_ide.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -161,6 +162,8 @@ class OffIdeExampleApp extends StatelessWidget {
           },
           pageRegistry: {
             'staff-management': (context, args) => const StaffManagementPage(),
+            'staff-profile': (context, args) =>
+                StaffProfilePage(args: args ?? {}),
             'resident-census': (context, args) => const ResidentCensusPage(),
             'facility-map': (context, args) => const FacilityMapPage(),
             'shift-scheduler': (context, args) => const ShiftSchedulerPage(),
@@ -185,22 +188,61 @@ class OffIdeExampleApp extends StatelessWidget {
   }
 
   static Widget _buildPeopleSidebar(BuildContext context) {
+    final people = [
+      {
+        'name': 'Emily Richardson',
+        'initials': 'ER',
+        'role': 'RN / Clinical Lead',
+        'shift': 'Morning / High Care',
+        'status': 'Active',
+      },
+      {
+        'name': 'Marcus Vane',
+        'initials': 'MV',
+        'role': 'LPN',
+        'shift': 'Post-Acute',
+        'status': 'Active',
+      },
+      {
+        'name': 'Sarah Jenkins',
+        'initials': 'SJ',
+        'role': 'CNA',
+        'shift': 'Dementia Care',
+        'status': 'Off-Shift',
+      },
+      {
+        'name': 'Dr. Alan Grant',
+        'initials': 'AG',
+        'role': 'Medical Director',
+        'shift': 'On Call',
+        'status': 'Active',
+      },
+    ];
     return ListView(
       padding: const EdgeInsets.all(8),
-      children: [
-        ListTile(
-          leading: const CircleAvatar(child: Text('JD')),
-          title: const Text('John Doe'),
-          subtitle: const Text('Administrator'),
-          onTap: () {},
-        ),
-        ListTile(
-          leading: const CircleAvatar(child: Text('AS')),
-          title: const Text('Alice Smith'),
-          subtitle: const Text('RN - Lead'),
-          onTap: () {},
-        ),
-      ],
+      children: people.map((person) {
+        return ListTile(
+          leading: CircleAvatar(child: Text(person['initials']!)),
+          title: Text(person['name']!),
+          subtitle: Text(person['role']!),
+          onTap: () {
+            context.read<WorkspaceBloc>().add(
+              OpenTab(
+                pageId: 'staff-profile',
+                title: person['name']!,
+                icon: Icons.person,
+                pageArgs: {
+                  'name': person['name'],
+                  'initials': person['initials'],
+                  'role': person['role'],
+                  'shift': person['shift'],
+                  'status': person['status'],
+                },
+              ),
+            );
+          },
+        );
+      }).toList(),
     );
   }
 }
@@ -322,7 +364,22 @@ class StaffManagementPage extends StatelessWidget {
 
   Widget _buildStaffRow(BuildContext context, Map<String, dynamic> staff) {
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        context.read<WorkspaceBloc>().add(
+          OpenTab(
+            pageId: 'staff-profile',
+            title: staff['name'] as String,
+            icon: Icons.person,
+            pageArgs: {
+              'name': staff['name'],
+              'initials': staff['initials'],
+              'role': staff['role'],
+              'shift': staff['shift'],
+              'status': staff['status'],
+            },
+          ),
+        );
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Row(
@@ -898,6 +955,169 @@ class ShiftSchedulerPage extends StatelessWidget {
           color: color.withValues(alpha: 0.8),
           fontWeight: FontWeight.bold,
           fontSize: 12,
+        ),
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 5. Staff Profile Page (Opens per staff member)
+// -----------------------------------------------------------------------------
+class StaffProfilePage extends StatelessWidget {
+  const StaffProfilePage({super.key, required this.args});
+
+  final Map<String, dynamic> args;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = args['name'] as String? ?? 'Unknown';
+    final initials = args['initials'] as String? ?? '??';
+    final role = args['role'] as String? ?? 'N/A';
+    final shift = args['shift'] as String? ?? 'N/A';
+    final status = args['status'] as String? ?? 'N/A';
+    final isActive = status == 'Active';
+
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 36,
+                backgroundColor: kPrimaryColor.withValues(alpha: .1),
+                child: Text(
+                  initials,
+                  style: kFontHeader.copyWith(fontSize: 24),
+                ),
+              ),
+              const SizedBox(width: 24),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: kFontHeader.copyWith(fontSize: 28)),
+                  const SizedBox(height: 4),
+                  Text(
+                    role,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? Colors.green.withValues(alpha: .1)
+                      : Colors.grey.withValues(alpha: .1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  status.toUpperCase(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isActive ? Colors.green[800] : Colors.grey[600],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          const Divider(),
+          const SizedBox(height: 24),
+
+          // Info Cards
+          Row(
+            children: [
+              _infoCard('Shift Group', shift, Icons.schedule),
+              const SizedBox(width: 16),
+              _infoCard('Department', 'North Region', Icons.location_city),
+              const SizedBox(width: 16),
+              _infoCard('Hire Date', 'Jan 2023', Icons.calendar_today),
+            ],
+          ),
+          const SizedBox(height: 32),
+
+          // Activity log
+          Text('Recent Activity', style: kFontHeader.copyWith(fontSize: 20)),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Card(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: 5,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final actions = [
+                    'Completed morning rounds',
+                    'Updated patient chart #104',
+                    'Shift check-in logged',
+                    'Training module completed',
+                    'Break taken (30 min)',
+                  ];
+                  return ListTile(
+                    leading: Icon(
+                      Icons.circle,
+                      size: 8,
+                      color: Colors.green[400],
+                    ),
+                    title: Text(actions[index]),
+                    trailing: Text(
+                      '${index + 1}h ago',
+                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoCard(String label, String value, IconData icon) {
+    return Expanded(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Icon(icon, color: kPrimaryColor, size: 28),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
