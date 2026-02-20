@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:off_ide/src/bloc/workspace_bloc.dart';
 import 'package:off_ide/src/models/workspace_config_model.dart';
 import 'package:off_ide/src/widgets/activity_bar.dart';
-import 'package:off_ide/src/widgets/sidebar.dart';
 import 'package:off_ide/src/widgets/resizable_container.dart';
+import 'package:off_ide/src/widgets/sidebar.dart';
 import 'package:off_ide/src/widgets/split_editor.dart';
 
 /// Main workspace shell widget providing a VS Code-like interface

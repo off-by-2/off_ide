@@ -135,6 +135,23 @@ class SplitConfiguration {
     this.activePane = 0,
   });
 
+  /// Creates a [SplitConfiguration] instance from a JSON map
+  factory SplitConfiguration.fromJson(Map<String, dynamic> json) {
+    return SplitConfiguration(
+      splitCount: json['splitCount'] as int? ?? 1,
+      orientation: SplitOrientation.values.firstWhere(
+        (e) => e.toString() == (json['orientation'] as String),
+        orElse: () => SplitOrientation.vertical,
+      ),
+      splitRatios:
+          (json['splitRatios'] as List<dynamic>?)
+              ?.map((e) => (e as num).toDouble())
+              .toList() ??
+          const [1.0],
+      activePane: json['activePane'] as int? ?? 0,
+    );
+  }
+
   /// Number of split panes currently active
   ///
   /// 1 = no split, 2 = one split (two panes), etc.
@@ -155,23 +172,6 @@ class SplitConfiguration {
   ///
   /// Used for tab operations and keyboard navigation.
   final int activePane;
-
-  /// Creates a [SplitConfiguration] instance from a JSON map
-  factory SplitConfiguration.fromJson(Map<String, dynamic> json) {
-    return SplitConfiguration(
-      splitCount: json['splitCount'] as int? ?? 1,
-      orientation: SplitOrientation.values.firstWhere(
-        (e) => e.toString() == (json['orientation'] as String),
-        orElse: () => SplitOrientation.vertical,
-      ),
-      splitRatios:
-          (json['splitRatios'] as List<dynamic>?)
-              ?.map((e) => (e as num).toDouble())
-              .toList() ??
-          const [1.0],
-      activePane: json['activePane'] as int? ?? 0,
-    );
-  }
 
   /// Converts the [SplitConfiguration] instance to a JSON map
   Map<String, dynamic> toJson() {

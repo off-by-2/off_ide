@@ -1,10 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:off_ide/src/models/models.dart';
 import 'package:uuid/uuid.dart';
-
-import 'package:hydrated_bloc/hydrated_bloc.dart';
 
 part 'workspace_event.dart';
 part 'workspace_state.dart';
@@ -41,6 +39,9 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
   WorkspaceState? fromJson(Map<String, dynamic> json) {
     try {
       return WorkspaceState.fromJson(json);
+
+      ///
+      // ignore: avoid_catches_without_on_clauses
     } catch (_) {
       return null;
     }
@@ -50,6 +51,9 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
   Map<String, dynamic>? toJson(WorkspaceState state) {
     try {
       return state.toJson();
+
+      ///
+      // ignore: avoid_catches_without_on_clauses
     } catch (_) {
       return null;
     }
@@ -408,15 +412,14 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
     final newTabsByPane = Map<int, List<String>>.from(state.tabsByPane);
 
     // Remove from source
-    final sourceTabs = List<String>.from(newTabsByPane[sourcePaneIndex]!);
-    sourceTabs.remove(event.tabId);
+    final sourceTabs = List<String>.from(newTabsByPane[sourcePaneIndex]!)
+      ..remove(event.tabId);
     newTabsByPane[sourcePaneIndex] = sourceTabs;
 
     // Add to target
     final targetTabs = List<String>.from(
       newTabsByPane[event.targetPaneIndex] ?? [],
-    );
-    targetTabs.add(event.tabId);
+    )..add(event.tabId);
     newTabsByPane[event.targetPaneIndex] = targetTabs;
 
     emit(
@@ -446,7 +449,7 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
     newTabsByPane[event.paneIndex] = [event.tabId];
 
     // If active tab was one of the removed ones, switch to the kept tab
-    String? newActiveTabId = state.activeTabId;
+    var newActiveTabId = state.activeTabId;
     if (tabsToRemove.contains(state.activeTabId)) {
       newActiveTabId = event.tabId;
     }
@@ -475,7 +478,7 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
     newTabsByPane[event.paneIndex] = [];
 
     // Validating active tab
-    String? newActiveTabId = state.activeTabId;
+    var newActiveTabId = state.activeTabId;
     if (paneTabs.contains(state.activeTabId)) {
       newActiveTabId =
           null; // No active tab if we closed the pane containing it

@@ -26,7 +26,7 @@ class WorkspaceSidebar extends StatelessWidget {
             : null;
 
         if (sidebarView == null) {
-          return Container(
+          return ColoredBox(
             color: Theme.of(context).colorScheme.surfaceContainerLow,
             child: const Center(
               child: Text(
@@ -37,7 +37,7 @@ class WorkspaceSidebar extends StatelessWidget {
           );
         }
 
-        return Container(
+        return ColoredBox(
           color: Theme.of(context).colorScheme.surfaceContainerLow,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

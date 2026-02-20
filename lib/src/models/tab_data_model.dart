@@ -13,6 +13,24 @@ class TabData extends Equatable {
     this.pageArgs,
   });
 
+  /// Creates a [TabData] instance from a JSON map
+  factory TabData.fromJson(Map<String, dynamic> json) {
+    return TabData(
+      id: json['id'] as String,
+      pageId: json['pageId'] as String,
+      title: json['title'] as String,
+      icon: json['iconCodePoint'] != null
+          ? IconData(
+              json['iconCodePoint'] as int,
+              fontFamily: json['iconFontFamily'] as String?,
+              fontPackage: json['iconFontPackage'] as String?,
+            )
+          : null,
+      isDirty: json['isDirty'] as bool? ?? false,
+      pageArgs: json['pageArgs'] as Map<String, dynamic>?,
+    );
+  }
+
   /// Unique identifier for this specific tab instance
   final String id;
 
@@ -47,24 +65,6 @@ class TabData extends Equatable {
       icon: icon ?? this.icon,
       isDirty: isDirty ?? this.isDirty,
       pageArgs: pageArgs ?? this.pageArgs,
-    );
-  }
-
-  /// Creates a [TabData] instance from a JSON map
-  factory TabData.fromJson(Map<String, dynamic> json) {
-    return TabData(
-      id: json['id'] as String,
-      pageId: json['pageId'] as String,
-      title: json['title'] as String,
-      icon: json['iconCodePoint'] != null
-          ? IconData(
-              json['iconCodePoint'] as int,
-              fontFamily: json['iconFontFamily'] as String?,
-              fontPackage: json['iconFontPackage'] as String?,
-            )
-          : null,
-      isDirty: json['isDirty'] as bool? ?? false,
-      pageArgs: json['pageArgs'] as Map<String, dynamic>?,
     );
   }
 

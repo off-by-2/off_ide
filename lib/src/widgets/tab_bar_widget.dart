@@ -203,8 +203,8 @@ class _TabWidget extends StatelessWidget {
               SwitchTab(tabId: tab.id, paneIndex: paneIndex),
             );
           },
-          onSecondaryTapUp: (details) {
-            _showContextMenu(context, details.globalPosition);
+          onSecondaryTapUp: (details) async {
+            await _showContextMenu(context, details.globalPosition);
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -279,9 +279,9 @@ class _TabWidget extends StatelessWidget {
     );
   }
 
-  void _showContextMenu(BuildContext context, Offset position) {
+  Future<void> _showContextMenu(BuildContext context, Offset position) async {
     final bloc = context.read<WorkspaceBloc>();
-    showMenu<String>(
+    await showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
         position.dx,
