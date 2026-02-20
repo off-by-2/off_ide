@@ -20,7 +20,7 @@ class OpenTab extends WorkspaceEvent {
     required this.title,
     this.icon,
     this.pageArgs,
-    this.paneIndex = 0,
+    this.paneIndex,
   });
 
   /// Unique identifier for the page type
@@ -41,13 +41,28 @@ class OpenTab extends WorkspaceEvent {
   /// Useful for parameterized pages (e.g., user profile with user ID).
   final Map<String, dynamic>? pageArgs;
 
-  /// Index of the split pane where this tab should be opened
+  /// Optional index of the split pane where this tab should be opened
   ///
+  /// If null, opens in the currently active pane.
   /// 0 = first pane (left), 1 = second pane (right), etc.
-  final int paneIndex;
+  final int? paneIndex;
 
   @override
   List<Object?> get props => [pageId, title, icon, pageArgs, paneIndex];
+}
+
+/// Event to set the active pane index
+///
+/// Used when a user clicks on a pane to focus it.
+class SetActivePane extends WorkspaceEvent {
+  /// Creates a [SetActivePane] event
+  const SetActivePane(this.paneIndex);
+
+  /// Index of the pane to activate
+  final int paneIndex;
+
+  @override
+  List<Object> get props => [paneIndex];
 }
 
 /// Event to close a specific tab
