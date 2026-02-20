@@ -51,15 +51,23 @@ class _PaneSelectorState extends Equatable {
     required this.activeTab,
     required this.canSplit,
     required this.canClose,
+    required this.isActivePane,
   });
 
   final List<TabData> tabs;
   final TabData? activeTab;
   final bool canSplit;
   final bool canClose;
+  final bool isActivePane;
 
   @override
-  List<Object?> get props => [tabs, activeTab, canSplit, canClose];
+  List<Object?> get props => [
+    tabs,
+    activeTab,
+    canSplit,
+    canClose,
+    isActivePane,
+  ];
 }
 
 /// Widget for displaying a single editor pane
@@ -82,30 +90,66 @@ class _SinglePane extends StatelessWidget {
           activeTab: state.getActiveTabInPane(paneIndex),
           canSplit: state.splitConfiguration.splitCount < 2,
           canClose: state.splitConfiguration.splitCount > 1,
+          isActivePane: state.activePaneIndex == paneIndex,
         );
       },
       builder: (context, state) {
-        return Column(
-          children: [
-            // Tab bar for this pane
-            WorkspaceTabBar(
-              paneIndex: paneIndex,
-              tabs: state.tabs,
-              activeTab: state.activeTab,
-              canSplit: state.canSplit,
-              canClose: state.canClose,
+        return GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTapDown: (_) {
+            context.read<WorkspaceBloc>().add(SetActivePane(paneIndex));
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              border: state.isActivePane
+                  ? Border.all(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 1.5,
+                    )
+                  : null,
             ),
+            child: Column(
+              children: [
+                // Tab bar for this pane
+                WorkspaceTabBar(
+                  paneIndex: paneIndex,
+                  tabs: state.tabs,
+                  activeTab: state.activeTab,
+                  canSplit: state.canSplit,
+                  canClose: state.canClose,
+                ),
 
-            // Content area
-            Expanded(
-              child: ColoredBox(
-                color: Theme.of(context).colorScheme.surface,
-                child: state.activeTab != null
-                    ? _buildPageContent(context, state.activeTab!)
-                    : _EmptyPane(paneIndex: paneIndex),
-              ),
+                // Content area
+                Expanded(
+                  child: DragTarget<String>(
+                    onWillAcceptWithDetails: (details) =>
+                        details.data.isNotEmpty,
+                    onAcceptWithDetails: (details) {
+                      context.read<WorkspaceBloc>().add(
+                        OpenTab(
+                          pageId: details.data,
+                          title:
+                              details.data, // Bloc will handle title if needed
+                          paneIndex: paneIndex,
+                        ),
+                      );
+                    },
+                    builder: (context, candidateData, rejectedData) {
+                      return ColoredBox(
+                        color: candidateData.isNotEmpty
+                            ? Theme.of(context).colorScheme.primaryContainer
+                                  .withValues(alpha: .3)
+                            : Theme.of(context).colorScheme.surface,
+                        child: state.activeTab != null
+                            ? _buildPageContent(context, state.activeTab!)
+                            : _buildEmptyPane(context, paneIndex),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -140,6 +184,19 @@ class _SinglePane extends StatelessWidget {
     }
 
     return pageBuilder(context, tab.pageArgs);
+  }
+
+  /// Build the empty pane content using config's emptyPaneBuilder or default
+  Widget _buildEmptyPane(BuildContext context, int paneIdx) {
+    final config = context
+        .findAncestorWidgetOfExactType<WorkspaceShell>()
+        ?.config;
+
+    if (config?.emptyPaneBuilder != null) {
+      return config!.emptyPaneBuilder!(context, paneIdx);
+    }
+
+    return _EmptyPane(paneIndex: paneIdx);
   }
 }
 
@@ -295,25 +352,6 @@ class _EmptyPane extends StatelessWidget {
           ),
 
           const SizedBox(height: 24),
-
-          // Quick actions
-          Wrap(
-            spacing: 8,
-            children: [
-              FilledButton.tonal(
-                onPressed: () {
-                  // TODO(user): Add quick action to create new file
-                },
-                child: const Text('New File'),
-              ),
-              FilledButton.tonal(
-                onPressed: () {
-                  // TODO(user): Add quick action to show recent files
-                },
-                child: const Text('Recent Files'),
-              ),
-            ],
-          ),
         ],
       ),
     );
