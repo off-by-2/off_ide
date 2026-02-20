@@ -342,47 +342,71 @@ class _MenuItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final leftPadding = 12.0 + (indentLevel * 20.0);
 
-    return InkWell(
-      onTap: () => _handleItemTap(context),
-      child: Container(
-        padding: EdgeInsets.only(
-          left: leftPadding,
-          right: 12,
-          top: 6,
-          bottom: 6,
-        ),
-        child: Row(
-          children: [
-            if (item.icon != null) ...[
-              Icon(
-                item.icon,
-                size: 16,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 8),
-            ],
-
-            Expanded(
-              child: Text(
-                item.label,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ),
-
-            if (item.shortcut != null) ...[
-              const SizedBox(width: 8),
+    return Draggable<String>(
+      data: item.pageId,
+      feedback: Material(
+        elevation: 4,
+        borderRadius: BorderRadius.circular(4),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (item.icon != null) ...[
+                Icon(item.icon, size: 16),
+                const SizedBox(width: 8),
+              ],
               Text(
-                item.shortcut!,
-                style: TextStyle(
-                  fontSize: 11,
+                item.label,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      ),
+      child: InkWell(
+        onTap: () => _handleItemTap(context),
+        child: Container(
+          padding: EdgeInsets.only(
+            left: leftPadding,
+            right: 12,
+            top: 6,
+            bottom: 6,
+          ),
+          child: Row(
+            children: [
+              if (item.icon != null) ...[
+                Icon(
+                  item.icon,
+                  size: 16,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
+                const SizedBox(width: 8),
+              ],
+
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
+
+              if (item.shortcut != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  item.shortcut!,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
