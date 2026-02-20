@@ -14,6 +14,7 @@ class WorkspaceState extends Equatable {
     this.expandedGroups = const {},
     this.splitConfiguration = const SplitConfiguration(),
     this.tabsByPane = const {0: []},
+    this.activeTabByPane = const {},
     this.error,
     this.sidebarWidth,
   }) : _tabMap = {for (final tab in openTabs) tab.id: tab};
@@ -47,6 +48,11 @@ class WorkspaceState extends Equatable {
             ),
           ) ??
           const {0: []},
+      activeTabByPane:
+          (json['activeTabByPane'] as Map<String, dynamic>?)?.map(
+            (k, v) => MapEntry(int.parse(k), v as String),
+          ) ??
+          const {},
       sidebarWidth: json['sidebarWidth'] as double?,
     );
   }
@@ -87,6 +93,9 @@ class WorkspaceState extends Equatable {
   /// Key is pane index, value is list of tab IDs in that pane.
   final Map<int, List<String>> tabsByPane;
 
+  /// Active tab ID for each pane index
+  final Map<int, String> activeTabByPane;
+
   /// Width of the sidebar (if resized by user)
   final double? sidebarWidth;
 
@@ -104,6 +113,7 @@ class WorkspaceState extends Equatable {
     Map<String, bool>? expandedGroups,
     SplitConfiguration? splitConfiguration,
     Map<int, List<String>>? tabsByPane,
+    Map<int, String>? activeTabByPane,
     double? sidebarWidth,
     String? error,
   }) {
@@ -115,6 +125,7 @@ class WorkspaceState extends Equatable {
       expandedGroups: expandedGroups ?? this.expandedGroups,
       splitConfiguration: splitConfiguration ?? this.splitConfiguration,
       tabsByPane: tabsByPane ?? this.tabsByPane,
+      activeTabByPane: activeTabByPane ?? this.activeTabByPane,
       sidebarWidth: sidebarWidth ?? this.sidebarWidth,
       error: error,
     );
@@ -166,15 +177,21 @@ class WorkspaceState extends Equatable {
 
   /// Gets the active tab for a specific pane
   ///
-  /// Returns the active tab if it's in the specified pane, null otherwise.
+  /// Each pane independently tracks its own active tab.
   TabData? getActiveTabInPane(int paneIndex) {
-    final activeId = activeTabId;
-    if (activeId == null) return null;
+    // Use per-pane active tab
+    final paneActiveId = activeTabByPane[paneIndex];
+    if (paneActiveId != null && _tabsById.containsKey(paneActiveId)) {
+      return _tabsById[paneActiveId];
+    }
 
+    // Fallback: if pane has tabs but no recorded active, show the last one
     final paneTabs = tabsByPane[paneIndex];
-    if (paneTabs == null || !paneTabs.contains(activeId)) return null;
+    if (paneTabs != null && paneTabs.isNotEmpty) {
+      return _tabsById[paneTabs.last];
+    }
 
-    return _tabsById[activeId];
+    return null;
   }
 
   /// Converts the [WorkspaceState] instance to a JSON map
@@ -187,6 +204,9 @@ class WorkspaceState extends Equatable {
       'expandedGroups': expandedGroups,
       'splitConfiguration': splitConfiguration.toJson(),
       'tabsByPane': tabsByPane.map((k, v) => MapEntry(k.toString(), v)),
+      'activeTabByPane': activeTabByPane.map(
+        (k, v) => MapEntry(k.toString(), v),
+      ),
     };
   }
 
@@ -199,6 +219,7 @@ class WorkspaceState extends Equatable {
     expandedGroups,
     splitConfiguration,
     tabsByPane,
+    activeTabByPane,
     error,
   ];
 }
