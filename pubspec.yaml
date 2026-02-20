@@ -1,13 +1,12 @@
 name: off_ide
 description: A high-performance IDE shell widget for Flutter.
-version: 0.1.0+1
-# publish_to: none
-repository: https://github.com/offby2/off_ide
-homepage: https://github.com/offby2/off_ide
+version: 0.1.0
+repository: https://github.com/off-by-2/off_ide
+homepage: https://github.com/off-by-2/off_ide
 
 environment:
   sdk: ^3.9.0
-  flutter: ^3.35.0
+  flutter: ">=3.35.0"
 
 dependencies:
   equatable: ^2.0.8
