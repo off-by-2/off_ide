@@ -31,7 +31,7 @@ jobs:
       - name: Build Web (Example)
         run: |
           cd example
-          flutter build web --base-href /off_ide/
+          flutter build web --base-href /off_ide/ --no-tree-shake-icons
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
