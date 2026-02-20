@@ -1,7 +1,18 @@
-# Exclude media files from published package
+# Build artifacts
+.dart_tool/
+build/
+.pub-cache/
+
+# Media files (demo assets, not needed in package)
 *.webm
 *.mp4
 *.gif
 
-# Exclude example app
+# Example app
 example/
+
+# IDE and OS files
+.idea/
+*.iml
+.vscode/
+.DS_Store
