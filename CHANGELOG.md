@@ -4,7 +4,7 @@
 
 - Added GitHub Actions for automatic deployment to GitHub Pages.
 - Updated example application with generic terminology (Project Management / Team Workspace).
-- Optimized Web support with standard persistence handling.
+- Optimized Web support with standard persistence handling and fixed icon tree-shaking for web builds.
 - Added live demo link to README.
 
 
