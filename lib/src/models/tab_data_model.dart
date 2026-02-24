@@ -9,6 +9,7 @@ class TabData extends Equatable {
     required this.pageId,
     required this.title,
     this.icon,
+    this.iconWidget,
     this.isDirty = false,
     this.pageArgs,
   });
@@ -19,13 +20,6 @@ class TabData extends Equatable {
       id: json['id'] as String,
       pageId: json['pageId'] as String,
       title: json['title'] as String,
-      icon: json['iconCodePoint'] != null
-          ? IconData(
-              json['iconCodePoint'] as int,
-              fontFamily: json['iconFontFamily'] as String?,
-              fontPackage: json['iconFontPackage'] as String?,
-            )
-          : null,
       isDirty: json['isDirty'] as bool? ?? false,
       pageArgs: json['pageArgs'] as Map<String, dynamic>?,
     );
@@ -43,6 +37,10 @@ class TabData extends Equatable {
   /// Optional icon displayed in the tab
   final IconData? icon;
 
+  /// Optional widget displayed in the tab, overrides [icon] if provided.
+  /// This allows using images, SVGs, or custom widgets as icons.
+  final Widget? iconWidget;
+
   /// Whether the tab has unsaved changes
   final bool isDirty;
 
@@ -55,6 +53,7 @@ class TabData extends Equatable {
     String? pageId,
     String? title,
     IconData? icon,
+    Widget? iconWidget,
     bool? isDirty,
     Map<String, dynamic>? pageArgs,
   }) {
@@ -63,6 +62,7 @@ class TabData extends Equatable {
       pageId: pageId ?? this.pageId,
       title: title ?? this.title,
       icon: icon ?? this.icon,
+      iconWidget: iconWidget ?? this.iconWidget,
       isDirty: isDirty ?? this.isDirty,
       pageArgs: pageArgs ?? this.pageArgs,
     );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
 import 'package:off_ide/src/models/menu_items_model.dart';
+import 'package:off_ide/src/models/tab_data_model.dart';
 
 /// Function signature for building page widgets
 ///
@@ -19,6 +19,7 @@ class WorkspaceConfig {
     required this.activityBarItems,
     required this.sidebarViews,
     required this.pageRegistry,
+    this.tabIconBuilder,
     this.maxTabs = 10,
     this.activityBarWidth = 48.0,
     this.sidebarWidth = 250.0,
@@ -43,6 +44,12 @@ class WorkspaceConfig {
   /// Key is the pageId used in navigation, value is the builder function
   /// that creates the widget for that page.
   final Map<String, PageBuilder> pageRegistry;
+
+  /// Optional builder to resolve icons for tabs dynamically based on pageId or title.
+  ///
+  /// By providing an explicit mapping funciton here, users can avoid passing raw [IconData]
+  /// around in JSON which prevents Flutter's icon font tree-shaking from working.
+  final Widget? Function(BuildContext context, TabData tab)? tabIconBuilder;
 
   /// Maximum number of tabs that can be open simultaneously
   ///
@@ -81,8 +88,9 @@ class ActivityBarItem {
   /// Creates an [ActivityBarItem]
   const ActivityBarItem({
     required this.id,
-    required this.icon,
     required this.label,
+    this.icon,
+    this.iconWidget,
     this.tooltip,
     this.itemContentBuilder,
   });
@@ -95,8 +103,13 @@ class ActivityBarItem {
   /// Icon displayed in the activity bar
   ///
   /// Should be recognizable and consistent with the activity's purpose.
-  /// Used if [itemContentBuilder] is null.
-  final IconData icon;
+  /// Used if [itemContentBuilder] and [iconWidget] are null.
+  final IconData? icon;
+
+  /// Optional widget displayed in the activity bar
+  ///
+  /// Overrides [icon] if provided. Useful for images or SVGs.
+  final Widget? iconWidget;
 
   /// Label for accessibility and tooltips
   ///

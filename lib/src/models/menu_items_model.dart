@@ -16,6 +16,7 @@ class MenuItem extends Equatable {
     required this.label,
     required this.pageId,
     this.icon,
+    this.iconWidget,
     this.tooltip,
     this.pageArgs,
     this.shortcut,
@@ -41,6 +42,11 @@ class MenuItem extends Equatable {
   /// Helps users quickly identify different types of pages.
   final IconData? icon;
 
+  /// Optional custom widget to display as icon
+  ///
+  /// Overrides [icon] if provided. Useful for images or SVGs.
+  final Widget? iconWidget;
+
   /// Optional tooltip text shown on hover
   ///
   /// Can provide additional context about the page's functionality.
@@ -62,6 +68,7 @@ class MenuItem extends Equatable {
     label,
     pageId,
     icon,
+    iconWidget,
     tooltip,
     pageArgs,
     shortcut,
@@ -80,6 +87,7 @@ class MenuGroup extends Equatable {
     this.items = const [],
     this.subGroups = const [],
     this.icon,
+    this.iconWidget,
     this.isExpanded = false,
     this.pageId,
     this.pageArgs,
@@ -110,6 +118,11 @@ class MenuGroup extends Equatable {
   /// Helps categorize different types of functionality.
   final IconData? icon;
 
+  /// Optional custom widget to display as icon
+  ///
+  /// Overrides [icon] if provided. Useful for images or SVGs.
+  final Widget? iconWidget;
+
   /// Whether this group is expanded by default
   ///
   /// User can still collapse/expand regardless of this setting.
@@ -130,6 +143,7 @@ class MenuGroup extends Equatable {
     items,
     subGroups,
     icon,
+    iconWidget,
     isExpanded,
     pageId,
     pageArgs,
@@ -147,6 +161,7 @@ class MenuSubGroup extends Equatable {
     required this.label,
     required this.items,
     this.icon,
+    this.iconWidget,
     this.isExpanded = false,
     this.pageId,
     this.pageArgs,
@@ -166,6 +181,10 @@ class MenuSubGroup extends Equatable {
   /// Optional icon displayed next to the sub-group name
   final IconData? icon;
 
+  /// Optional custom widget to display as icon
+  /// Overrides [icon] if provided. Useful for images or SVGs.
+  final Widget? iconWidget;
+
   /// Whether this sub-group is expanded by default
   final bool isExpanded;
 
@@ -181,6 +200,7 @@ class MenuSubGroup extends Equatable {
     label,
     items,
     icon,
+    iconWidget,
     isExpanded,
     pageId,
     pageArgs,
