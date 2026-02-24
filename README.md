@@ -15,6 +15,7 @@ A high-performance, VS Code-like workspace shell widget for Flutter applications
 - **Persistence**: Automatic state restoration of open tabs and sidebar state via `HydratedBloc`.
 - **Web Ready**: Optimized for web deployments with responsive design and persistence support.
 - **High Performance**: Optimized for large widget trees with O(1) state lookups and granular rebuilds.
+- **Custom Icons**: Support for dynamic widgets (images, SVGs, etc.) via the `iconWidget` property across sidebar and tabs, preserving icon tree-shaking for web applications.
 - **Customizable**: Fully configurable activity bar, sidebar views, and page registry.
 - **Theme Aware**: Seamlessly integrates with your application's `ThemeData`, supporting both light and dark modes.
 
@@ -29,15 +30,19 @@ dependencies:
 
 ## Usage
 
-The main entry point is the `WorkspaceShell` widget, which requires a `WorkspaceConfig`.
+The main entry point is the `WorkspaceShell` widget, which requires a `WorkspaceConfig`. 
+
+There are two primary ways to define this configuration: **Hardcoded** (for simple, static apps) and **Dynamic** (for robust, backend-driven apps like CRMs).
+
+### 1. Basic Usage (Hardcoded)
+
+For simple applications where the sidebar structure never changes, you can define your `WorkspaceConfig` statically:
 
 ```dart
 import 'package:flutter/material.dart';
 import 'package:off_ide/off_ide.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -53,15 +58,8 @@ class MyApp extends StatelessWidget {
               id: 'files',
               icon: Icons.folder_outlined,
               label: 'Explorer',
-              tooltip: 'Project Files',
-            ),
-            const ActivityBarItem(
-              id: 'settings',
-              icon: Icons.settings_outlined,
-              label: 'Settings',
             ),
           ],
-
           // 2. Define Sidebar Content
           sidebarViews: {
             'files': const SidebarView(
@@ -71,13 +69,11 @@ class MyApp extends StatelessWidget {
                  MenuGroup(
                    id: 'project',
                    label: 'My Project',
-                   isExpanded: true,
                    items: [
                      MenuItem(
                        id: 'readme',
                        label: 'README.md',
                        pageId: 'markdown_viewer',
-                       pageArgs: {'file': 'README.md'},
                        icon: Icons.description_outlined,
                      ),
                    ],
@@ -85,12 +81,9 @@ class MyApp extends StatelessWidget {
               ],
             ),
           },
-
           // 3. Register Page Builders
           pageRegistry: {
-            'markdown_viewer': (context, args) {
-              return Center(child: Text('Viewing ${args?['file']}'));
-            },
+            'markdown_viewer': (context, args) => const Center(child: Text('README')),
           },
         ),
       ),
@@ -99,19 +92,47 @@ class MyApp extends StatelessWidget {
 }
 ```
 
-## Key Concepts
+### 2. Advanced Usage: Dynamic Configuration & RBAC (Recommended)
 
-### WorkspaceConfig
-The central configuration object defining the entire workspace structure. It connects activities to sidebars and menu items to pages.
+The `WorkspaceConfig` is built to be extremely flexible. For complex applications, it is highly recommended to dynamically generate your sidebar using backend-driven JSON schemas combined with a state manager (like `flutter_bloc`).
 
-### Activity Bar
-The narrow vertical strip on the far left. Items here switch the *context* of the sidebar (e.g., from File Explorer to Search).
+This approach easily enables **Role-Based Access Control (RBAC)**. 
 
-### Sidebar
-The collapsible panel next to the activity bar. It typically displays hierarchical navigation (MenuGroups and MenuItems) relevant to the active activity.
+#### Implementation Example
+By wrapping `WorkspaceShell` in a state listener, the shell will seamlessly update and automatically close restricted tabs when roles change!
 
-### Split Editor
-The main content area. It can display a single view or be split vertically to show multiple tabs at once.
+```dart
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Listen to your Auth/Role State Manager
+    return BlocBuilder<RoleCubit, String>(
+      builder: (context, currentRole) {
+        return MaterialApp(
+          home: WorkspaceShell(
+            config: WorkspaceConfig(
+              
+              // 1. Parse your backend JSON and filter by `currentRole`
+              activityBarItems: CustomParser.parseActivityBar(jsonSchema, currentRole),
+              sidebarViews: CustomParser.parseSidebars(jsonSchema, currentRole),
+              
+              // 2. Only provide page builders the user has access to
+              pageRegistry: CustomParser.getPageRegistry(currentRole),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+```
+
+#### Key Dynamic Features:
+1. **Discard Restricted Items:** Overwrite your `CustomParser` to check if a user has permission to see a JSON item. If not, don't instantiate the `MenuItem`.
+2. **Auto-Purge Tabs:** Because `WorkspaceShell` is deeply stateful, if the user's role changes, the shell will automatically purge any open tabs that no longer exist in the updated `pageRegistry`. 
+3. **Custom Backend Icons:** Make use of the `iconWidget` parameter to parse custom backend icons (SVGs, Image Assets, custom Flutter code) instead of standard `IconData` to ensure Flutter web compilation works smoothly with tree-shaking.
+
+*See the `example/lib/main.dart` source code to view a complete, production-ready implementation of dynamic JSON parsing and an interactive RBAC role toggle.*
 
 ## Additional Resources
 

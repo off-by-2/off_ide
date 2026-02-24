@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.3
+
+- Added `iconWidget` property to `ActivityBarItem`, `SidebarView`, `MenuItem`, `MenuGroup`, and `MenuSubGroup` to support generic custom widgets (images, SVGs) overriding `icon` data.
+- Fixed an issue requiring the `--no-tree-shake-icons` build flag for web by avoiding dynamic `IconData` parsing in models.
+- Upgraded `WorkspaceShell` to dynamically react to `WorkspaceConfig` updates, automatically dropping inaccessible tabs and redirecting restricted views when roles or setups change.
+
 ## 0.1.2
 
 - Added GitHub Actions for automatic deployment to GitHub Pages.

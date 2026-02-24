@@ -1,3 +1,3 @@
 # example
 
-A new Flutter project.
+Off IDE example.
