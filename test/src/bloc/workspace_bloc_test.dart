@@ -1,8 +1,21 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:off_ide/off_ide.dart';
 
+class MockStorage extends Mock implements Storage {}
+
 void main() {
+  setUpAll(() {
+    final storage = MockStorage();
+    when(() => storage.write(any(), any<dynamic>())).thenAnswer((_) async {});
+    when(() => storage.read(any())).thenReturn(<String, dynamic>{});
+    when(() => storage.delete(any())).thenAnswer((_) async {});
+    when(storage.clear).thenAnswer((_) async {});
+    HydratedBloc.storage = storage;
+  });
+
   group('WorkspaceBloc', () {
     late WorkspaceBloc bloc;
 
@@ -197,7 +210,7 @@ void main() {
       );
 
       blocTest<WorkspaceBloc, WorkspaceState>(
-        'CloseSplit merges tabs and reduces split count',
+        'CloseSplit discards tabs and reduces split count',
         build: () => bloc,
         seed: () => WorkspaceState(
           splitConfiguration: const SplitConfiguration(splitCount: 2),
@@ -217,9 +230,10 @@ void main() {
               .having((s) => s.splitConfiguration.splitCount, 'splitCount', 1)
               .having(
                 (s) => s.tabsByPane[0],
-                'merged tabs',
-                containsAll(['t1', 't2']),
+                'kept tabs',
+                ['t1'],
               )
+              .having((s) => s.openTabs.length, 'discarded second tab', 1)
               .having((s) => s.activePaneIndex, 'reset active pane', 0),
         ],
       );
