@@ -5,7 +5,7 @@ import 'package:off_ide/off_ide.dart';
 import 'package:path_provider/path_provider.dart';
 
 // Theme Constants
-const kPrimaryColor = Color(0xFF2D3748); // Slate
+const kPrimaryColor = Color.fromARGB(255, 70, 100, 64); // Slate
 const kAccentColor = Color(0xFFEDF2F7); // Light Grey-Blue
 const kSurfaceColor = Color(0xFFF7FAFC); // Off White
 
@@ -27,164 +27,348 @@ void main() async {
   runApp(const OffIdeExampleApp());
 }
 
+// -----------------------------------------------------------------------------
+// DYNAMIC CRM COMPONENTS
+// -----------------------------------------------------------------------------
+
+class RoleCubit extends Cubit<String> {
+  RoleCubit() : super('admin');
+
+  void toggleRole() => emit(state == 'admin' ? 'user' : 'admin');
+}
+
+class SchemaMappers {
+  static IconData getIcon(String? iconName) {
+    if (iconName == null) return Icons.circle_outlined;
+    switch (iconName) {
+      case 'folder_outlined':
+        return Icons.folder_outlined;
+      case 'people_outline':
+        return Icons.people_outline;
+      case 'analytics_outlined':
+        return Icons.analytics_outlined;
+      case 'settings_outlined':
+        return Icons.settings_outlined;
+      case 'people':
+        return Icons.people;
+      case 'dashboard':
+        return Icons.dashboard;
+      case 'map':
+        return Icons.map;
+      case 'view_kanban':
+        return Icons.view_kanban;
+      case 'storage':
+        return Icons.storage;
+      default:
+        return Icons.circle_outlined;
+    }
+  }
+
+  static Widget? getIconWidget(String? iconName) {
+    if (iconName == 'flutter_logo') {
+      return const FlutterLogo(size: 24);
+    } else if (iconName == 'custom_image') {
+      return const Icon(Icons.star, color: Colors.amber, size: 24);
+    }
+    return null;
+  }
+
+  static Map<String, Widget Function(BuildContext, Map<String, dynamic>?)>
+  getPageRegistry(String userRole) {
+    final Map<String, Widget Function(BuildContext, Map<String, dynamic>?)>
+    registry = {
+      'team-directory': (context, args) => const TeamDirectoryPage(),
+      'member-profile': (context, args) => MemberProfilePage(args: args ?? {}),
+      'project-overview': (context, args) => const ProjectOverviewPage(),
+      'office-layout': (context, args) => const OfficeLayoutPage(),
+    };
+
+    if (userRole == 'admin') {
+      registry['sprint-board'] = (context, args) => const SprintBoardPage();
+      registry['engineering-dash'] = (context, args) => Container(
+        color: Colors.orange.shade50,
+        child: const Center(
+          child: Text(
+            'Engineering Dashboard\n(Actionable Group Demo)',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+      registry['resources'] = (context, args) => Container(
+        color: Colors.blue.shade50,
+        child: const Center(child: Text('Resources Configuration')),
+      );
+    }
+
+    return registry;
+  }
+}
+
+class SidebarParser {
+  static List<ActivityBarItem> parseActivityBar(
+    List<dynamic> schema,
+    String userRole,
+  ) {
+    return schema
+        .where((activity) => _hasAccess(activity['allowedRoles'], userRole))
+        .map(
+          (activity) => ActivityBarItem(
+            id: activity['id'],
+            icon: SchemaMappers.getIcon(activity['icon']),
+            iconWidget: SchemaMappers.getIconWidget(activity['icon']),
+            label: activity['label'],
+            tooltip: activity['tooltip'],
+          ),
+        )
+        .toList();
+  }
+
+  static Map<String, SidebarView> parseSidebarViews(
+    List<dynamic> schema,
+    String userRole,
+  ) {
+    Map<String, SidebarView> views = {};
+
+    for (var activity in schema) {
+      if (!_hasAccess(activity['allowedRoles'], userRole)) continue;
+
+      if (activity['childBuilder'] != null) {
+        WidgetBuilder? builder;
+        if (activity['childBuilder'] == 'teamSidebar') {
+          builder = OffIdeExampleApp.buildTeamSidebar;
+        } else if (activity['childBuilder'] == 'settingsSidebar') {
+          builder = OffIdeExampleApp.buildSettingsSidebar;
+        }
+
+        views[activity['id']] = SidebarView(
+          id: activity['id'],
+          title:
+              activity['title'] ?? activity['label'].toString().toUpperCase(),
+          groups: const [],
+          childBuilder: builder,
+        );
+        continue;
+      }
+
+      List<MenuGroup> parsedGroups = [];
+
+      for (var group in (activity['groups'] ?? [])) {
+        if (!_hasAccess(group['allowedRoles'], userRole)) continue;
+
+        List<MenuSubGroup> parsedSubGroups = [];
+        for (var subGroup in (group['subGroups'] ?? [])) {
+          if (!_hasAccess(subGroup['allowedRoles'], userRole)) continue;
+
+          List<MenuItem> parsedItems = [];
+          for (var item in (subGroup['items'] ?? [])) {
+            if (!_hasAccess(item['allowedRoles'], userRole)) continue;
+
+            parsedItems.add(
+              MenuItem(
+                id: item['id'],
+                label: item['label'],
+                pageId: item['pageId'],
+                icon: SchemaMappers.getIcon(item['icon']),
+                iconWidget: SchemaMappers.getIconWidget(item['icon']),
+              ),
+            );
+          }
+
+          parsedSubGroups.add(
+            MenuSubGroup(
+              id: subGroup['id'],
+              label: subGroup['label'],
+              icon: SchemaMappers.getIcon(subGroup['icon']),
+              iconWidget: SchemaMappers.getIconWidget(subGroup['icon']),
+              isExpanded: subGroup['isExpanded'] ?? false,
+              pageId: subGroup['pageId'],
+              items: parsedItems,
+            ),
+          );
+        }
+
+        parsedGroups.add(
+          MenuGroup(
+            id: group['id'],
+            label: group['label'],
+            icon: SchemaMappers.getIcon(group['icon']),
+            iconWidget: SchemaMappers.getIconWidget(group['icon']),
+            isExpanded: group['isExpanded'] ?? false,
+            subGroups: parsedSubGroups,
+          ),
+        );
+      }
+
+      views[activity['id']] = SidebarView(
+        id: activity['id'],
+        title: activity['title'] ?? activity['label'].toString().toUpperCase(),
+        groups: parsedGroups,
+      );
+    }
+    return views;
+  }
+
+  static bool _hasAccess(List<dynamic>? allowedRoles, String userRole) {
+    if (allowedRoles == null || allowedRoles.isEmpty) return true;
+    if (userRole == 'admin') return true;
+    return allowedRoles.cast<String>().contains(userRole);
+  }
+}
+
+final List<Map<String, dynamic>> crmSidebarSchema = [
+  {
+    "id": "explorer",
+    "icon": "flutter_logo",
+    "label": "Explorer",
+    "tooltip": "Project Explorer",
+    "title": "EXPLORER",
+    "allowedRoles": ["admin", "user"],
+    "groups": [
+      {
+        "id": "acme_corp",
+        "label": "Acme_Corp",
+        "isExpanded": true,
+        "allowedRoles": ["admin", "user"],
+        "subGroups": [
+          {
+            "id": "marketing",
+            "label": "Marketing",
+            "isExpanded": true,
+            "allowedRoles": ["admin", "user"],
+            "items": [
+              {
+                "id": "team_directory",
+                "label": "Team_Directory.list",
+                "pageId": "team-directory",
+                "icon": "people",
+                "allowedRoles": ["admin", "user"],
+              },
+              {
+                "id": "project_overview",
+                "label": "Project_Overview.dash",
+                "pageId": "project-overview",
+                "icon": "dashboard",
+                "allowedRoles": ["admin", "user"],
+              },
+              {
+                "id": "office_layout",
+                "label": "Office_Layout.map",
+                "pageId": "office-layout",
+                "icon": "map",
+                "allowedRoles": ["admin", "user"],
+              },
+            ],
+          },
+          {
+            "id": "engineering",
+            "label": "Engineering",
+            "isExpanded": false,
+            "pageId": "engineering-dash",
+            "allowedRoles": ["admin"], // ONLY ADMIN SEES THIS
+            "items": [
+              {
+                "id": "sprint_board",
+                "label": "Sprint_Board.task",
+                "pageId": "sprint-board",
+                "icon": "view_kanban",
+                "allowedRoles": ["admin"],
+              },
+              {
+                "id": "resources",
+                "label": "Resources.cfg",
+                "pageId": "resources",
+                "icon": "storage",
+                "allowedRoles": ["admin"],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    "id": "team",
+    "icon": "people_outline",
+    "label": "Team",
+    "tooltip": "Team Members",
+    "title": "TEAM",
+    "allowedRoles": ["admin", "user"],
+    "childBuilder": "teamSidebar",
+  },
+  {
+    "id": "analytics",
+    "icon": "analytics_outlined",
+    "label": "Analytics",
+    "tooltip": "Reports & Metrics (Admin Only)",
+    "title": "ANALYTICS",
+    "allowedRoles": ["admin"], // ONLY ADMIN SEES ANALYTICS
+    "childBuilder": "teamSidebar",
+  },
+  {
+    "id": "settings",
+    "icon": "settings_outlined",
+    "label": "Settings",
+    "tooltip": "Configuration",
+    "title": "SETTINGS",
+    "allowedRoles": ["admin", "user"],
+    "childBuilder": "settingsSidebar",
+  },
+];
+
+// -----------------------------------------------------------------------------
+// APP WIDGET
+// -----------------------------------------------------------------------------
+
 class OffIdeExampleApp extends StatelessWidget {
   const OffIdeExampleApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Off IDE Demo',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: kPrimaryColor,
-          surface: kSurfaceColor,
-          primary: kPrimaryColor,
-        ),
-        useMaterial3: true,
-        cardTheme: CardThemeData(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
-          color: Colors.white,
-        ),
-      ),
-      home: WorkspaceShell(
-        config: WorkspaceConfig(
-          maxTabs: 10,
-          activityBarItems: [
-            const ActivityBarItem(
-              id: 'explorer',
-              icon: Icons.folder_outlined,
-              label: 'Explorer',
-              tooltip: 'Project Explorer',
-            ),
-            const ActivityBarItem(
-              id: 'team',
-              icon: Icons.people_outline,
-              label: 'Team',
-              tooltip: 'Team Members',
-            ),
-            const ActivityBarItem(
-              id: 'analytics',
-              icon: Icons.analytics_outlined,
-              label: 'Analytics',
-              tooltip: 'Reports & Metrics',
-            ),
-            const ActivityBarItem(
-              id: 'settings',
-              icon: Icons.settings_outlined,
-              label: 'Settings',
-              tooltip: 'Configuration',
-            ),
-          ],
-          sidebarViews: {
-            'explorer': const SidebarView(
-              id: 'explorer',
-              title: 'EXPLORER',
-              groups: [
-                MenuGroup(
-                  id: 'acme_corp',
-                  label: 'Acme_Corp',
-                  isExpanded: true,
-                  subGroups: [
-                    MenuSubGroup(
-                      id: 'marketing',
-                      label: 'Marketing',
-                      isExpanded: true,
-                      items: [
-                        MenuItem(
-                          id: 'team_directory',
-                          label: 'Team_Directory.list',
-                          pageId: 'team-directory',
-                          icon: Icons.people,
-                        ),
-                        MenuItem(
-                          id: 'project_overview',
-                          label: 'Project_Overview.dash',
-                          pageId: 'project-overview',
-                          icon: Icons.dashboard,
-                        ),
-                        MenuItem(
-                          id: 'office_layout',
-                          label: 'Office_Layout.map',
-                          pageId: 'office-layout',
-                          icon: Icons.map,
-                        ),
-                      ],
-                    ),
-                    MenuSubGroup(
-                      id: 'engineering',
-                      label: 'Engineering',
-                      isExpanded: false,
-                      pageId: 'engineering-dash',
-                      items: [
-                        MenuItem(
-                          id: 'sprint_board',
-                          label: 'Sprint_Board.task',
-                          pageId: 'sprint-board',
-                          icon: Icons.view_kanban,
-                        ),
-                        MenuItem(
-                          id: 'resources',
-                          label: 'Resources.cfg',
-                          pageId: 'resources',
-                          icon: Icons.storage,
-                        ),
-                      ],
-                    ),
-                  ],
+    return BlocProvider(
+      create: (_) => RoleCubit(),
+      child: BlocBuilder<RoleCubit, String>(
+        builder: (context, currentRole) {
+          return MaterialApp(
+            title: 'Off IDE Demo',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: kPrimaryColor,
+                surface: kSurfaceColor,
+                primary: kPrimaryColor,
+              ),
+              useMaterial3: true,
+              cardTheme: CardThemeData(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey.shade200),
                 ),
-              ],
-            ),
-            'team': const SidebarView(
-              title: 'TEAM',
-              id: 'team',
-              groups: [],
-              childBuilder: _buildTeamSidebar,
-            ),
-            'analytics': const SidebarView(
-              title: 'ANALYTICS',
-              id: 'analytics',
-              groups: [],
-              childBuilder: _buildTeamSidebar,
-            ),
-            'settings': const SidebarView(
-              title: 'SETTINGS',
-              id: 'settings',
-              groups: [],
-            ),
-          },
-          pageRegistry: {
-            'team-directory': (context, args) => const TeamDirectoryPage(),
-            'member-profile': (context, args) =>
-                MemberProfilePage(args: args ?? {}),
-            'project-overview': (context, args) => const ProjectOverviewPage(),
-            'office-layout': (context, args) => const OfficeLayoutPage(),
-            'sprint-board': (context, args) => const SprintBoardPage(),
-            'engineering-dash': (context, args) => Container(
-              color: Colors.orange.shade50,
-              child: const Center(
-                child: Text(
-                  'Engineering Dashboard\n(Actionable Group Demo)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
+                color: Colors.white,
               ),
             ),
-            'resources': (context, args) => Container(
-              color: Colors.blue.shade50,
-              child: const Center(child: Text('Resources Configuration')),
+            home: WorkspaceShell(
+              config: WorkspaceConfig(
+                maxTabs: 10,
+                activityBarItems: SidebarParser.parseActivityBar(
+                  crmSidebarSchema,
+                  currentRole,
+                ),
+                sidebarViews: SidebarParser.parseSidebarViews(
+                  crmSidebarSchema,
+                  currentRole,
+                ),
+                pageRegistry: SchemaMappers.getPageRegistry(currentRole),
+              ),
             ),
-          },
-        ),
+          );
+        },
       ),
     );
   }
 
-  static Widget _buildTeamSidebar(BuildContext context) {
+  static Widget buildTeamSidebar(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(8),
       children: _teamMembers.map((person) {
@@ -210,6 +394,75 @@ class OffIdeExampleApp extends StatelessWidget {
           },
         );
       }).toList(),
+    );
+  }
+
+  static Widget buildSettingsSidebar(BuildContext context) {
+    return BlocBuilder<RoleCubit, String>(
+      builder: (context, role) {
+        final isAdmin = role == 'admin';
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isAdmin ? Colors.blue.shade50 : Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isAdmin ? Colors.blue.shade200 : Colors.grey.shade200,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Access Control',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Toggle your role to see dynamic routing in action. Changes apply instantly.',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Admin Mode',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: kPrimaryColor,
+                        ),
+                      ),
+                      Switch(
+                        value: isAdmin,
+                        onChanged: (val) {
+                          context.read<RoleCubit>().toggleRole();
+                        },
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      isAdmin
+                          ? '✅ Analytics & Engineering visible.'
+                          : '❌ Analytics & Engineering hidden.',
+                      style: TextStyle(
+                        color: isAdmin ? Colors.green[700] : Colors.red[700],
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
