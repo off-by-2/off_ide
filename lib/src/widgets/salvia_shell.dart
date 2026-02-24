@@ -73,10 +73,44 @@ class WorkspaceShell extends StatelessWidget {
 ///
 /// Separated for cleaner code organization and to ensure BLoC context
 /// is properly available to all child widgets.
-class _WorkspaceLayout extends StatelessWidget {
+class _WorkspaceLayout extends StatefulWidget {
   const _WorkspaceLayout({required this.config});
 
   final WorkspaceConfig config;
+
+  @override
+  State<_WorkspaceLayout> createState() => _WorkspaceLayoutState();
+}
+
+class _WorkspaceLayoutState extends State<_WorkspaceLayout> {
+  @override
+  void didUpdateWidget(_WorkspaceLayout oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Check if configuration changed
+    if (widget.config != oldWidget.config) {
+      final bloc = context.read<WorkspaceBloc>();
+      final activeActivity = bloc.state.activeActivityId;
+
+      // If the currently active activity is no longer in the config (e.g., due to role change),
+      // switch to the first available activity to avoid a broken UI state.
+      final activityExists = widget.config.activityBarItems.any(
+        (item) => item.id == activeActivity,
+      );
+
+      if (!activityExists && widget.config.activityBarItems.isNotEmpty) {
+        bloc.add(SwitchActivity(widget.config.activityBarItems.first.id));
+      }
+
+      // Check open tabs and close any that are no longer accessible
+      final openTabs = bloc.state.openTabs;
+      for (final tab in openTabs) {
+        if (!widget.config.pageRegistry.containsKey(tab.pageId)) {
+          bloc.add(CloseTab(tab.id));
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,15 +121,16 @@ class _WorkspaceLayout extends StatelessWidget {
           return Row(
             children: [
               // Activity Bar - Using proper ActivityBar widget
-              ActivityBar(items: config.activityBarItems),
+              ActivityBar(items: widget.config.activityBarItems),
 
               // Resizable Container for Sidebar + Content
               Expanded(
                 child: ResizableContainer(
-                  sidebarWidth: state.sidebarWidth ?? config.sidebarWidth,
+                  sidebarWidth:
+                      state.sidebarWidth ?? widget.config.sidebarWidth,
                   onResize: (width) =>
                       context.read<WorkspaceBloc>().add(ResizeSidebar(width)),
-                  sidebar: WorkspaceSidebar(config: config),
+                  sidebar: WorkspaceSidebar(config: widget.config),
                   content: const SplitEditor(),
                 ),
               ),
