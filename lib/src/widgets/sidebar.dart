@@ -151,7 +151,10 @@ class _MenuGroupWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (group.icon != null) ...[
+                  if (group.iconWidget != null) ...[
+                    const SizedBox(width: 4),
+                    group.iconWidget!,
+                  ] else if (group.icon != null) ...[
                     const SizedBox(width: 4),
                     Icon(group.icon, size: 16),
                   ],
@@ -167,6 +170,7 @@ class _MenuGroupWidget extends StatelessWidget {
                               pageId: group.pageId!,
                               title: group.label,
                               icon: group.icon,
+                              iconWidget: group.iconWidget,
                               pageArgs: group.pageArgs,
                             ),
                           );
@@ -268,7 +272,10 @@ class _MenuSubGroupWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (subGroup.icon != null) ...[
+                  if (subGroup.iconWidget != null) ...[
+                    const SizedBox(width: 4),
+                    subGroup.iconWidget!,
+                  ] else if (subGroup.icon != null) ...[
                     const SizedBox(width: 4),
                     Icon(subGroup.icon, size: 14),
                   ],
@@ -284,6 +291,7 @@ class _MenuSubGroupWidget extends StatelessWidget {
                               pageId: subGroup.pageId!,
                               title: subGroup.label,
                               icon: subGroup.icon,
+                              iconWidget: subGroup.iconWidget,
                               pageArgs: subGroup.pageArgs,
                             ),
                           );
@@ -353,7 +361,10 @@ class _MenuItemWidget extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (item.icon != null) ...[
+              if (item.iconWidget != null) ...[
+                item.iconWidget!,
+                const SizedBox(width: 8),
+              ] else if (item.icon != null) ...[
                 Icon(item.icon, size: 16),
                 const SizedBox(width: 8),
               ],
@@ -376,7 +387,10 @@ class _MenuItemWidget extends StatelessWidget {
           ),
           child: Row(
             children: [
-              if (item.icon != null) ...[
+              if (item.iconWidget != null) ...[
+                item.iconWidget!,
+                const SizedBox(width: 8),
+              ] else if (item.icon != null) ...[
                 Icon(
                   item.icon,
                   size: 16,
@@ -421,6 +435,7 @@ class _MenuItemWidget extends StatelessWidget {
         pageId: item.pageId,
         title: item.label,
         icon: item.icon,
+        iconWidget: item.iconWidget,
         pageArgs: item.pageArgs,
       ),
     );

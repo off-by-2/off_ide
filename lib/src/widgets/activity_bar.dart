@@ -112,13 +112,14 @@ class _ActivityBarButton extends StatelessWidget {
               ),
               child: item.itemContentBuilder != null
                   ? item.itemContentBuilder!(context, isActive: isActive)
-                  : Icon(
-                      item.icon,
-                      size: 24,
-                      color: isActive
-                          ? colorScheme.primary
-                          : colorScheme.onSurfaceVariant,
-                    ),
+                  : item.iconWidget ??
+                        Icon(
+                          item.icon,
+                          size: 24,
+                          color: isActive
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
+                        ),
             ),
           ),
         ),

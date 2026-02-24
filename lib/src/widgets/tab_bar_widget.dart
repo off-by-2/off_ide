@@ -148,7 +148,10 @@ class _TabWidget extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (tab.icon != null) ...[
+                  if (tab.iconWidget != null) ...[
+                    tab.iconWidget!,
+                    const SizedBox(width: 8),
+                  ] else if (tab.icon != null) ...[
                     Icon(tab.icon, size: 16, color: colorScheme.onSurface),
                     const SizedBox(width: 8),
                   ],
@@ -213,7 +216,10 @@ class _TabWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Tab icon
-                if (tab.icon != null) ...[
+                if (tab.iconWidget != null) ...[
+                  tab.iconWidget!,
+                  const SizedBox(width: 6),
+                ] else if (tab.icon != null) ...[
                   Icon(
                     tab.icon,
                     size: 16,
