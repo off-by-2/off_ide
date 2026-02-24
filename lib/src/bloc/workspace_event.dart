@@ -19,6 +19,7 @@ class OpenTab extends WorkspaceEvent {
     required this.pageId,
     required this.title,
     this.icon,
+    this.iconWidget,
     this.pageArgs,
     this.paneIndex,
   });
@@ -36,6 +37,10 @@ class OpenTab extends WorkspaceEvent {
   /// Optional icon displayed in the tab
   final IconData? icon;
 
+  /// Optional custom widget displayed in the tab
+  /// Overrides [icon] if provided. Useful for images or SVGs.
+  final Widget? iconWidget;
+
   /// Optional arguments passed to the page builder
   ///
   /// Useful for parameterized pages (e.g., user profile with user ID).
@@ -48,7 +53,14 @@ class OpenTab extends WorkspaceEvent {
   final int? paneIndex;
 
   @override
-  List<Object?> get props => [pageId, title, icon, pageArgs, paneIndex];
+  List<Object?> get props => [
+    pageId,
+    title,
+    icon,
+    iconWidget,
+    pageArgs,
+    paneIndex,
+  ];
 }
 
 /// Event to set the active pane index

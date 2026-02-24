@@ -110,6 +110,7 @@ class WorkspaceBloc extends HydratedBloc<WorkspaceEvent, WorkspaceState> {
       pageId: event.pageId,
       title: event.title,
       icon: event.icon,
+      iconWidget: event.iconWidget,
       pageArgs: event.pageArgs,
     );
 
